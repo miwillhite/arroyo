@@ -1,0 +1,15 @@
+{
+  "name": "slim-grid",
+  "version": "0.0.1",
+  "description": "A lightweight grid designed for data streams.",
+  "main": "index.js",
+  "scripts": {
+    "test": "karma start"
+  },
+  "author": "Matthew Willhite",
+  "license": "ISC",
+  "dependencies": {
+    "flyd": "^0.2.0",
+    "ramda": "^0.18.0"
+  }
+}
