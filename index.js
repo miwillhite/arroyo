@@ -51,10 +51,7 @@ const data = [
 //
 const inputStream = stream(data);
 const xformStream = stream();
-
-const dataStream = combine((xform, d) => {
-  return call(xform(), d());
-}, [xformStream, inputStream]);
+const dataStream = xformStream.ap(inputStream);
 
 // The Hook
 //
