@@ -30,6 +30,8 @@ import {
 
 const log = console.log;
 
+// The Data
+//
 const transformers = [
   identity,
   reverse,
@@ -45,6 +47,8 @@ const data = [
   { f: 'u' }
 ];
 
+// The Meat
+//
 const inputStream = stream(data);
 const xformStream = stream();
 
@@ -52,10 +56,12 @@ const dataStream = combine((xform, d) => {
   return call(xform(), d());
 }, [xformStream, inputStream]);
 
-// Hook
+// The Hook
+//
 on((d) => log(`Results: ${JSON.stringify(d)}`), dataStream);
 
-// Testing
+// The Testing
+//
 let xform;
 while (xform = transformers.shift()) {
   xformStream(xform);
