@@ -9,7 +9,12 @@
   "author": "Matthew Willhite",
   "license": "ISC",
   "dependencies": {
+    "babel-plugin-syntax-flow": "^6.3.13",
+    "babel-plugin-transform-flow-strip-types": "^6.3.15",
     "flyd": "^0.2.0",
     "ramda": "^0.18.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.3.15"
   }
 }
