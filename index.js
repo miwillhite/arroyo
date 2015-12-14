@@ -69,7 +69,8 @@ const statusSignal: Signal = {
   actions: ['sort']
 };
 
-const inputSignals = map(stream, [nameSignal, statusSignal]);
+// This is a stub, we don't really care about it
+const inputSignals = map(stream, [nameSignal]);
 
 // Input Management
 //
@@ -89,6 +90,7 @@ const mapFromSignal = (signal: Signal): Function => {
 }
 
 // Merge all input signals into one stream.
+// This is the primary entry point
 const signalAggregateStream = reduce(mergeS, stream(), inputSignals);
 
 // Collect all xform fns, mapped from the signal stream.
@@ -120,3 +122,7 @@ const dataStream = xformStream.ap(inputStream);
 // The Hook
 //
 on(log, dataStream);
+
+// The Bait
+//
+signalAggregateStream(statusSignal);
