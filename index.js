@@ -1,4 +1,5 @@
 'use strict';
+/* @flow */
 
 import {
   ap,
@@ -58,12 +59,12 @@ type Signal = { field: string, actions: Array<string> };
 
 // Signal Stubs
 //
-const nameSignal = {
+const nameSignal: Signal = {
   field: 'name',
   actions: ['desc', 'sort']
 };
 
-const statusSignal = {
+const statusSignal: Signal = {
   field: 'status',
   actions: ['sort']
 };
