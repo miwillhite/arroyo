@@ -3,30 +3,43 @@
 import {
   ap,
   combine,
-  merge as mergeF,
+  isStream,
+  map as mapS,
+  merge as mergeS,
   on,
-  scan as scanF,
+  scan as scanS,
   stream,
   transduce
 } from 'flyd';
 
 import {
   always,
+  append,
   apply,
   call,
   compose,
+  cond,
+  equals,
   head,
+  flatten,
   identity,
   is,
   keys,
   lift,
+  map,
   nth,
+  prepend,
+  prop,
   of,
+  reduce,
+  reduceRight,
   reverse,
   sortBy,
   toPairs,
+  T,
   unless,
-  unnest
+  unnest,
+  when,
 } from 'ramda';
 
 
@@ -35,94 +48,74 @@ import {
 
 const log = console.log;
 
+//
+// Data Layer
+//
 
-
-/////////////////////////////////////////////////////////////////////////
-// DATA LAYER
-/////////////////////////////////////////////////////////////////////////
-
-/**
- * Represents a field and transformation actions to be applied.
- * A "Signal" is generated as a result of a user interaction event.
- */
+// Represents a field and transformation actions to be applied.
+// A "Signal" is generated as a result of a user interaction event.
 type Signal = { field: string, actions: Array<string> };
 
-/*
- * Imagine:
- *
- * +--------+----------+
- * | Name ↓ | Status - |
- * +--------+----------+
- *
- * => Name: Sort, Desc
- * => Status: -
- *
- */
-
+// Signal Stubs
+//
 const nameSignal = {
   field: 'name',
-  actions: ['sort', 'desc']
+  actions: ['desc', 'sort']
 };
 
 const statusSignal = {
   field: 'status',
-  actions: []
+  actions: ['sort']
 };
 
-const inputSignals = R.map(stream, [nameSignal, statusSignal]);
+const inputSignals = map(stream, [nameSignal, statusSignal]);
 
 // Input Management
 //
 
 // Maps the signal dictionary to an operable xform fn.
-// Expects a signal: { field: String, actions: [String] }
+// mapFromSignal :: Signal -> [(Object -> [a)]
 const mapFromSignal = (signal: Signal): Function => {
-  // TODO: Go through the signal actions
+  return reduceRight((acc, action) => {
+    return prepend(
+      cond([
+        [when(is(String), equals('sort')) , always(sortBy(prop(signal.field)))],
+        [when(is(String), equals('desc')) , always(reverse)],
+        [T                                , always(identity)]
+      ])(action)
+    )(acc);
+  }, [], signal.actions);
 }
 
-// Merge all input signals into one stream
-const signalAggregateStream = apply(mergeF(inputSignals));
+// Merge all input signals into one stream.
+const signalAggregateStream = reduce(mergeS, stream(), inputSignals);
 
-// Collect all xform fns, mapped from the signal stream
-// NOTE: This operation will need to clean up the aggregate stream, so as to avoid duplicate
-// or conflicting xforms.
-const xformAggregateStream = scanF((xformList, signal) => {
-  return prepend(mapFromSignal(signal), xformList)
+// Collect all xform fns, mapped from the signal stream.
+// TODO This operation will need to EVENTUALLY clean up the aggregate stream,
+//      so as to avoid duplicate or conflicting xforms.
+const xformAggregateStream = scanS((xformList, signal) => {
+  return flatten(prepend(mapFromSignal(signal), xformList));
 }, [], signalAggregateStream);
 
-// Compose xform fns into a single fn
-const xformStream = mapF((xformList) => apply(compose, xformList), xformAggregateStream);
-
-
+// Compose xform fns into a single fn.
+const xformStream = mapS((xformList) => apply(compose, xformList), xformAggregateStream);
 
 // The Data
 //
 const data = [
-  { name: 'zed', status: 'foo' },
+  { name: 'why', status: 'foo' },
   { name: 'yoo', status: 'baz' },
   { name: 'xix', status: 'baz' },
-  { name: 'why', status: 'foo' },
   { name: 'vue', status: 'foo' },
+  { name: 'zed', status: 'foo' },
   { name: 'umm', status: 'foo' }
 ];
 
 // The Meat
 //
 const inputStream = stream(data);
-// const xformStream = stream();
 const dataStream = xformStream.ap(inputStream);
 
 // The Hook
 //
-on((d) => log(`Results: ${JSON.stringify(d)}`), dataStream);
-
-// The Testing
-//
-// let xform;
-// while (xform = transformers.shift()) {
-//   xformStream(xform);
-// }
-
-// Results: [{"a":"z"},{"b":"y"},{"c":"x"},{"d":"w"},{"e":"v"},{"f":"u"}]
-// Results: [{"f":"u"},{"e":"v"},{"d":"w"},{"c":"x"},{"b":"y"},{"a":"z"}]
-// Results: [["a","z"],["b","y"],["c","x"],["d","w"],["e","v"],["f","u"]]
+on(log, dataStream);
