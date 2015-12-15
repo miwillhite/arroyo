@@ -18,7 +18,9 @@ import {
   append,
   apply,
   call,
+  clone,
   compose,
+  concat,
   cond,
   equals,
   head,
@@ -76,7 +78,7 @@ const inputSignals = map(stream, [nameSignal]);
 //
 
 // Maps the signal dictionary to an operable xform fn.
-// mapFromSignal :: Signal -> [(Object -> [a)]
+// mapFromSignal :: Signal -> [(Object -> [a])]
 const mapFromSignal = (signal: Signal): Function => {
   return reduceRight((acc, action) => {
     return prepend(
@@ -96,9 +98,10 @@ const signalAggregateStream = reduce(mergeS, stream(), inputSignals);
 // Collect all xform fns, mapped from the signal stream.
 // TODO This operation will need to EVENTUALLY clean up the aggregate stream,
 //      so as to avoid duplicate or conflicting xforms.
-const xformAggregateStream = scanS((xformList, signal) => {
-  return flatten(prepend(mapFromSignal(signal), xformList));
-}, [], signalAggregateStream);
+const xformAggregateStream = scanS(
+  (xformList, signal) => concat(mapFromSignal(signal), xformList),
+  [], signalAggregateStream
+);
 
 // Compose xform fns into a single fn.
 const xformStream = mapS((xformList) => apply(compose, xformList), xformAggregateStream);
@@ -126,3 +129,6 @@ on(log, dataStream);
 // The Bait
 //
 signalAggregateStream(statusSignal);
+
+// The reset stream
+dataStream(clone(data));
